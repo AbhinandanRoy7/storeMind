@@ -1,6 +1,6 @@
 # DESIGN.md — StoreMind AI System Design
 
-> **Note on Repository Structure:** We deviated slightly from the rubric's suggested flat layout because our architecture includes a dedicated Next.js web application. Our monorepo is split logically into `/frontend` (React/Next.js dashboard), `/backend` (FastAPI + Tests), and `/cv` (YOLOv8 Detection Pipeline). The `DESIGN.md` and `CHOICES.md` documents are kept at the root for immediate visibility.
+> **Note on Repository Structure:** I deviated slightly from the rubric's suggested flat layout because my architecture includes a dedicated Next.js web application. My monorepo is split logically into `/frontend` (React/Next.js dashboard), `/backend` (FastAPI + Tests), and `/cv` (YOLOv8 Detection Pipeline). The `DESIGN.md` and `CHOICES.md` documents are kept at the root for immediate visibility.
 
 ## 1. Data Flow
 
@@ -36,10 +36,10 @@ Grounded Business Answers
 
 ## 2. Zone Mapping — Brigade Road Layout (`Brigade Road - Store layoutc5f5d56.xlsx`)
 
-We directly utilized the provided physical store layout to define our analytics zones. The layout defines specific product gondolas along the walls and center units.
+I directly utilized the provided physical store layout to define my analytics zones. The layout defines specific product gondolas along the walls and center units.
 
 ### Physical to Digital Mapping
-Because CCTV cameras provide a 2D perspective view of a 3D space, we map the physical zones from the Excel sheet into **pixel coordinate polygons** on the respective camera feeds. 
+Because CCTV cameras provide a 2D perspective view of a 3D space, I map the physical zones from the Excel sheet into **pixel coordinate polygons** on the respective camera feeds. 
 
 **Zone Definitions based on Layout:**
 *   **Top Wall Gondolas:** EB, TFS, GV, DermDoc, Minimalist, Aqualogica, Pilgrim, D&K
@@ -47,15 +47,15 @@ Because CCTV cameras provide a 2D perspective view of a 3D space, we map the phy
 *   **Center Floor:** Fragrance Nail Unit, F.O.H (Makeup Unit)
 *   **Right Side:** CASH COUNTER (Billing)
 
-When a camera covers a specific section (e.g., CAM3 covers the top-left section with `DermDoc`), we draw an invisible digital polygon over that area in the video frame.
+When a camera covers a specific section (e.g., CAM3 covers the top-left section with `DermDoc`), I draw an invisible digital polygon over that area in the video frame.
 
 #### AI-Assisted Zone Classification (VLM Prompting)
-To accurately map the Excel sheet's physical layout to the 2D pixel coordinates of the camera feeds, we used a Vision Language Model (Gemini 1.5 Pro Vision) during the development phase. We passed a static frame from each camera to the VLM with the following prompt:
+To accurately map the Excel sheet's physical layout to the 2D pixel coordinates of the camera feeds, I used a Vision Language Model (Gemini 1.5 Pro Vision) during the development phase. I passed a static frame from each camera to the VLM with the following prompt:
 
 **VLM Prompt:** 
 > "Attached is a frame from CCTV Camera 3, along with the store's physical floor plan (Excel layout). Identify the exact pixel bounding boxes (x_min, y_min, x_max, y_max) for the 'Maybelline', 'DermDoc', and 'Billing Queue' zones visible in this frame. Output only the JSON mapping."
 
-**Evaluation:** The VLM was remarkably accurate at identifying the major visual landmarks (like the cash register for the billing queue), giving us a baseline pixel mapping. However, we had to manually tweak the YOLOv8 intersection polygons slightly outward to account for perspective distortion at the edges of the camera lens. This VLM-assisted mapping saved hours of manual pixel-hunting.
+**Evaluation:** The VLM was remarkably accurate at identifying the major visual landmarks (like the cash register for the billing queue), giving me a baseline pixel mapping. However, I had to manually tweak the YOLOv8 intersection polygons slightly outward to account for perspective distortion at the edges of the camera lens. This VLM-assisted mapping saved hours of manual pixel-hunting.
 
 ### Zone Detection Method
 When a visitor's bounding box centroid (their feet) crosses into a mapped zone polygon for >3 seconds, a `ZONE_VISIT` event is fired for that specific SKU zone.
@@ -114,7 +114,7 @@ The AI tools are pure Python functions that query Supabase directly. This preven
 
 ## 4. RAG Architecture — Why Not PDFs?
 
-Most RAG systems embed static PDF documents. Our system embeds **live analytics** — this is the key innovation:
+Most RAG systems embed static PDF documents. My system embeds **live analytics** — this is the key innovation:
 
 **Traditional RAG:**
 ```
@@ -138,8 +138,8 @@ The `document_builder.py` runs daily (or on-demand) to convert the current day's
 - For demo: nano is sufficient. For production: upgrade to `yolov8s` on GPU hardware.
 
 ### Supabase vs Raw PostgreSQL
-- Supabase gives us free Realtime subscriptions, Auth, and Row Level Security out of the box
-- Raw PostgreSQL would require setting up our own Realtime infrastructure
+- Supabase gives me free Realtime subscriptions, Auth, and Row Level Security out of the box
+- Raw PostgreSQL would require setting up my own Realtime infrastructure
 - Tradeoff: Supabase's free tier limits (500MB DB, 2GB bandwidth) — acceptable for hackathon
 
 ### Gemini 2.5 Flash vs GPT-4
@@ -151,7 +151,7 @@ The `document_builder.py` runs daily (or on-demand) to convert the current day's
 - Qdrant: Free cloud tier, gRPC support, excellent performance
 - Chroma: Local only, no cloud tier
 - Pinecone: Limited free tier
-- Qdrant wins for our use case
+- Qdrant wins for my use case
 
 ### Embedding Model: BAAI/bge-small-en-v1.5 vs OpenAI Ada
 - BGE-small: Free, runs locally, 384 dims, excellent for semantic search
@@ -188,12 +188,12 @@ This project heavily utilized AI assistance throughout its development, specific
 
 ### 1. The Detection Pipeline Architecture
 Initially, the plan was to write a custom object tracking loop using Euclidean distance between frame detections. AI analysis highlighted the severe limitations of this approach (frequent ID switches on occlusion) and recommended integrating **ByteTrack**. The AI explained how ByteTrack's use of low-confidence bounding boxes for association prevents ID loss when a customer walks behind a shelf, which is critical for accurate dwell-time metrics. 
-**Decision:** We **agreed** with this assessment and overrode our custom distance-tracker in favor of implementing ByteTrack natively in `cv/yolov8_pipeline.py`.
+**Decision:** I **agreed** with this assessment and overrode my custom distance-tracker in favor of implementing ByteTrack natively in `cv/yolov8_pipeline.py`.
 
 ### 2. Event Driven Data Model
-When designing the database schema, the initial thought was to continuously store a visitor's X/Y coordinates every second to track their path. AI assistance pointed out that this would quickly overwhelm the free-tier Supabase database (30 frames * 5 cameras * 10 hours * 100 people = millions of rows daily). Instead, the AI suggested an **Event-Driven Architecture** where we only emit discrete business events (`ZONE_ENTER`, `ZONE_EXIT`, `PURCHASE`). 
-**Decision:** We **agreed** with the AI's logic. We overrode our initial continuous-polling schema and implemented the highly efficient discrete event schema, reducing database writes by >99%.
+When designing the database schema, the initial thought was to continuously store a visitor's X/Y coordinates every second to track their path. AI assistance pointed out that this would quickly overwhelm the free-tier Supabase database (30 frames * 5 cameras * 10 hours * 100 people = millions of rows daily). Instead, the AI suggested an **Event-Driven Architecture** where I only emit discrete business events (`ZONE_ENTER`, `ZONE_EXIT`, `PURCHASE`). 
+**Decision:** I **agreed** with the AI's logic. I overrode my initial continuous-polling schema and implemented the highly efficient discrete event schema, reducing database writes by >99%.
 
 ### 3. RAG over Structured Analytics
 The prompt for the AI Copilot required it to answer questions like "Why is conversion down?". The first approach considered was passing raw JSON API responses to the LLM. The AI guided the design toward a more scalable **Semantic Search (RAG)** approach. It recommended a daily cron job that summarizes metrics into natural language "analytics documents" and embeds them into Qdrant using the `BGE-small` model. 
-**Decision:** We partially **agreed**, but **overrode** the daily cron job suggestion. Because a hackathon requires real-time demo capabilities, we opted to embed analytics documents on-the-fly when the copilot endpoint is called, rather than waiting for a midnight cron job.
+**Decision:** I partially **agreed**, but **overrode** the daily cron job suggestion. Because a hackathon requires real-time demo capabilities, I opted to embed analytics documents on-the-fly when the copilot endpoint is called, rather than waiting for a midnight cron job.
