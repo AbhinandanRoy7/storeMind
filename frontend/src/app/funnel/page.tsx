@@ -4,7 +4,7 @@ import axios from "axios";
 import { motion } from "framer-motion";
 import { TrendingDown, Target } from "lucide-react";
 
-const API_BASE = ${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000")}/api/v1;
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000") + "/api/v1";
 
 export default function FunnelPage() {
   const [data, setData] = useState({

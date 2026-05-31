@@ -2,7 +2,7 @@
 import { motion } from "framer-motion";
 import { Wifi, WifiOff, Eye, Users, Activity } from "lucide-react";
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000");
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 const cameras = [
   { id: "CAM_1", name: "Main Entrance", status: "online", zone: "Entry" },
