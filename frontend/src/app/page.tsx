@@ -7,7 +7,7 @@ import {
   PieChart, Pie, Cell, Legend
 } from "recharts";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000");
 const STORE_ID = "STORE_BLR_002";
 
 const fmt = (n: number) =>

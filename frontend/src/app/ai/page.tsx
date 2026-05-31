@@ -13,7 +13,7 @@ export default function AICopilotPage() {
   const handleSearch = async () => {
     if (!query) return;
     try {
-      const res = await axios.post("http://localhost:8000/api/v1/ai/chat", { query });
+      const res = await axios.post(${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000")}/api/v1/ai/chat, { query });
       setResponses([{ q: query, a: res.data.response }, ...responses]);
       setQuery("");
     } catch (e) {

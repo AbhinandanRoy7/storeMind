@@ -13,7 +13,7 @@ import {
 } from "recharts";
 import { Clock, TrendingUp, AlertTriangle, XCircle } from "lucide-react";
 
-const API_BASE = "http://localhost:8000/api/v1";
+const API_BASE = ${process.env.NEXT_PUBLIC_API_URL || (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000")}/api/v1;
 
 const mockHistory = Array.from({ length: 12 }, (_, i) => ({
   time: `${8 + i}:00`,
