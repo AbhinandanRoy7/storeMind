@@ -60,9 +60,11 @@ function Calendar({
         ...classNames,
       }}
       components={{
+        // @ts-expect-error - IconLeft is not in the latest react-day-picker type definitions
         IconLeft: ({ className, ...props }) => (
           <ChevronLeft className={cn("size-4", className)} {...props} />
         ),
+        // @ts-expect-error - IconRight is not in the latest react-day-picker type definitions
         IconRight: ({ className, ...props }) => (
           <ChevronRight className={cn("size-4", className)} {...props} />
         ),
