@@ -1,0 +1,17 @@
+fastapi
+uvicorn
+supabase
+python-dotenv
+pydantic
+pydantic-settings
+redis
+httpx
+pytest
+python-jose
+passlib
+bcrypt
+qdrant-client
+sentence-transformers
+google-genai
+structlog
+prometheus-client
