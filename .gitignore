@@ -31,3 +31,5 @@ evaluation/
 *.csv
 *.xlsx
 # Keep sample_events.jsonl and pos_transactions.csv if they are small, but let's ignore large ones. Wait, the problem statement says "sample_events.jsonl" and "pos_transactions.csv" are given to us. They might be small enough, but let's ignore the big zips.
+
+*.pdf
