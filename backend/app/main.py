@@ -49,6 +49,8 @@ async def log_and_measure(request: Request, call_next):
         response = await call_next(request)
         status_code = response.status_code
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         logger.error("Unhandled exception or database unavailable", error=str(e))
         return JSONResponse(
             status_code=503,

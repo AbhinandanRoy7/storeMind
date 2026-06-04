@@ -33,7 +33,9 @@ CREATE TABLE sessions (
     entry_time TIMESTAMP,
     exit_time TIMESTAMP,
     session_duration_seconds INTEGER,
-    conversion_status BOOLEAN DEFAULT FALSE
+    conversion_status BOOLEAN DEFAULT FALSE,
+    basket_value_inr NUMERIC DEFAULT 0.0,
+    correlated_transaction_id TEXT
 );
 
 -- events
@@ -54,4 +56,13 @@ CREATE TABLE anomalies (
     severity TEXT,
     description TEXT,
     status TEXT
+);
+
+-- pos_transactions
+CREATE TABLE pos_transactions (
+    transaction_id TEXT PRIMARY KEY,
+    store_code TEXT,
+    timestamp TIMESTAMP,
+    basket_value_inr NUMERIC,
+    is_correlated BOOLEAN DEFAULT FALSE
 );

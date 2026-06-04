@@ -38,9 +38,8 @@ class VisitorRegistry:
                 if vdata["camera_id"] == camera_id:
                     continue
                     
-                if current_time - vdata["last_seen"] > 30.0:
-                    continue
-                    
+                # Allow matching across large gaps to detect re-entries
+                # Removed the `if current_time - vdata["last_seen"] > 30.0: continue` constraint.
                 if vdata["hist"] is not None:
                     score = cv2.compareHist(hist, vdata["hist"], cv2.HISTCMP_CORREL)
                     if score > best_score and score > self.match_threshold:
@@ -48,10 +47,16 @@ class VisitorRegistry:
                         best_match = vid
                     
             if best_match:
+                time_gap = current_time - self.visitors[best_match]["last_seen"]
                 self.mapping[key] = best_match
                 self.visitors[best_match]["hist"] = hist 
                 self.visitors[best_match]["last_seen"] = current_time
                 self.visitors[best_match]["camera_id"] = camera_id
+                
+                # Flag as re-entry if they were gone for more than 30s
+                if time_gap > 30.0:
+                    self.visitors[best_match]["is_reentry"] = True
+                    
                 print(f"[ReID] Matched {camera_id}:{track_id} to {best_match} (Score: {best_score:.2f})")
                 return best_match
                 
@@ -61,10 +66,18 @@ class VisitorRegistry:
         self.visitors[vid] = {
             "hist": hist,
             "last_seen": current_time,
-            "camera_id": camera_id
+            "camera_id": camera_id,
+            "is_reentry": False
         }
         self.next_visitor_number += 1
         return vid
+
+    def check_and_clear_reentry(self, visitor_id: str) -> bool:
+        if visitor_id in self.visitors:
+            if self.visitors[visitor_id].get("is_reentry"):
+                self.visitors[visitor_id]["is_reentry"] = False
+                return True
+        return False
 
     def reset(self):
         self.mapping = {}

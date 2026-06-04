@@ -18,16 +18,16 @@ docker compose up -d
 # Open your browser and navigate to: http://localhost:3000
 
 # 4. Run the detection pipeline to generate events from the CCTV clip
-python cv/yolov8_pipeline.py --input "CCTV Footage/clip.mp4" --output final_events_submission.json
+$env:PYTHONPATH="."; python -m cv.run "Store 1"
 
-# 5. Feed the detection pipeline output live into the API
+# 5. Feed the detection pipeline output live into the API (Optional, as the pipeline pushes directly now)
 python replay_events.py --batch 5 --delay 0.2
 ```
 
 ## Running the Detection Pipeline
-The pipeline uses YOLOv8 to process raw MP4 files. The output is a JSON array of raw events.
+The pipeline uses YOLOv8 to process raw MP4 files.
 ```bash
-python cv/yolov8_pipeline.py --input "path/to/cctv.mp4" --output final_events_submission.json
+$env:PYTHONPATH="."; python -m cv.run "Store 1"
 ```
 
 ## Replaying into the Live API

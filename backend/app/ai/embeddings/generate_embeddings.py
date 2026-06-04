@@ -11,15 +11,19 @@ class EmbeddingPipeline:
         print("[Embeddings] Connecting to local Qdrant...")
         from app.core.config import settings
         
-        if settings.QDRANT_URL and settings.QDRANT_API_KEY:
+        if getattr(settings, "QDRANT_PATH", None):
+            path = settings.QDRANT_PATH
+            root_qdrant = os.path.abspath(os.path.join(os.getcwd(), path))
+            self.client = QdrantClient(path=root_qdrant)
+            print(f"[Embeddings] Connected to local Qdrant at {root_qdrant}")
+        elif getattr(settings, "QDRANT_URL", None) and getattr(settings, "QDRANT_API_KEY", None):
             self.client = QdrantClient(
                 url=settings.QDRANT_URL,
                 api_key=settings.QDRANT_API_KEY
             )
             print(f"[Embeddings] Connected to Qdrant Cloud at {settings.QDRANT_URL}")
         else:
-            path = settings.QDRANT_PATH if settings.QDRANT_PATH else "../qdrant_data"
-            root_qdrant = os.path.abspath(os.path.join(os.getcwd(), path))
+            root_qdrant = os.path.abspath(os.path.join(os.getcwd(), "../qdrant_data"))
             self.client = QdrantClient(path=root_qdrant)
             print(f"[Embeddings] Connected to local Qdrant at {root_qdrant}")
         

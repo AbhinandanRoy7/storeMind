@@ -1,5 +1,5 @@
 from app.core.supabase import get_supabase
-
+from app.services.pos_correlation import pos_service
 import datetime
 
 class AnalyticsService:
@@ -20,11 +20,18 @@ class AnalyticsService:
         
         unique_visitors = len(visitors)
         
-        # 2. Conversion Rate
-        sessions_resp = self.db.table("sessions").select("conversion_status").execute()
-        total_sessions = len(sessions_resp.data)
-        converted = sum(1 for s in sessions_resp.data if s.get("conversion_status"))
+        # 2. Conversion Rate and Revenue (via POS Correlation)
+        sessions_resp = self.db.table("sessions").select("*").execute()
+        # Correlate sessions with POS data in-memory
+        correlated_sessions = pos_service.correlate_sessions(sessions_resp.data)
+        
+        total_sessions = len(correlated_sessions)
+        converted = sum(1 for s in correlated_sessions if s.get("conversion_status"))
         conversion_rate = (converted / total_sessions * 100) if total_sessions > 0 else 0.0
+        
+        total_revenue = sum(s.get("basket_value_inr", 0.0) for s in correlated_sessions)
+        avg_basket_size = (total_revenue / converted) if converted > 0 else 0.0
+        revenue_per_visitor = (total_revenue / unique_visitors) if unique_visitors > 0 else 0.0
         
         # 3. Avg Dwell per zone
         zone_dwells = {}
@@ -49,11 +56,16 @@ class AnalyticsService:
         # Queue depth is roughly joins minus leaves
         queue_depth = max(0, joins - (abandons + purchases))
         abandonment_rate = (abandons / joins * 100) if joins > 0 else 0.0
+        revenue_lost_to_abandonment = abandons * avg_basket_size
 
         return {
             "store_id": store_id,
             "unique_visitors": unique_visitors,
             "conversion_rate": conversion_rate,
+            "total_revenue": total_revenue,
+            "avg_basket_size": avg_basket_size,
+            "revenue_per_visitor": revenue_per_visitor,
+            "revenue_lost_to_abandonment": revenue_lost_to_abandonment,
             "avg_dwell_per_zone": avg_dwell_per_zone,
             "queue_depth": queue_depth,
             "abandonment_rate": abandonment_rate
@@ -148,18 +160,38 @@ class AnalyticsService:
         anomalies = []
         if queue_depth > 15:
             anomalies.append({
-                "type": "QUEUE_SPIKE",
+                "type": "BILLING_QUEUE_SPIKE",
                 "severity": "CRITICAL",
                 "description": f"Queue depth has spiked to {queue_depth} customers.",
                 "suggested_action": "Deploy backup cashier to Counter 2 immediately."
             })
         elif queue_depth > 8:
             anomalies.append({
-                "type": "QUEUE_SPIKE",
+                "type": "BILLING_QUEUE_SPIKE",
                 "severity": "WARN",
                 "description": f"Queue depth is building up ({queue_depth} customers).",
                 "suggested_action": "Monitor queue length closely."
             })
+            
+        # 1.5 CHECKOUT_DELAY (Wait times > 90s)
+        # Parse wait_seconds from queue events metadata
+        wait_times = []
+        for r in events_resp.data:
+            if r["event_type"] in ["queue_completed", "BILLING_QUEUE_ABANDON", "QUEUE_ABANDON"]:
+                meta = r.get("metadata") or {}
+                wait_sec = meta.get("wait_seconds")
+                if wait_sec is not None:
+                    wait_times.append(float(wait_sec))
+                    
+        if wait_times:
+            avg_wait = sum(wait_times) / len(wait_times)
+            if avg_wait > 90.0:
+                anomalies.append({
+                    "type": "CHECKOUT_DELAY",
+                    "severity": "CRITICAL",
+                    "description": f"Average checkout time is {avg_wait:.1f}s, significantly above the 90s threshold.",
+                    "suggested_action": "Open second billing counter immediately."
+                })
             
         # 2. Conversion Drop (mock 7-day avg comparison for MVP)
         sessions_resp = self.db.table("sessions").select("conversion_status").execute()

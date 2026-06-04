@@ -33,3 +33,10 @@ evaluation/
 # Keep sample_events.jsonl and pos_transactions.csv if they are small, but let's ignore large ones. Wait, the problem statement says "sample_events.jsonl" and "pos_transactions.csv" are given to us. They might be small enough, but let's ignore the big zips.
 
 *.pdf
+
+# Explicitly ignored resource files
+sample_eventsbe42122.jsonl
+Purplle_Tech_Challenge_PS3f02573.pdf
+POS - sample transactionsb1e826f.csv
+Store 1/
+Store 2/

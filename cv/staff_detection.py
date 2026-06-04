@@ -34,27 +34,24 @@ class StaffDetectionEngine:
         self.last_seen[visitor_id] = current_time
         self.seen_cameras[visitor_id].add(camera_id)
         
-        # Rule 1: Spend a lot of time in the Billing zone (specifically behind the counter area)
-        # Note: For CCTV cameras, the staff member spends cumulative time at BILLING
         if zone_name == "BILLING":
-            # Assume 1 second intervals for simplicity in cumulative updates
             self.billing_dwell[visitor_id] += 1.0
-            if self.billing_dwell[visitor_id] >= self.counter_dwell_threshold:
-                self.staff_visitors.add(visitor_id)
-                print(f"[StaffEngine] Visitor {visitor_id} flagged as STAFF (Rule: Spend > {self.counter_dwell_threshold}s at billing counter)")
-                return True
-                
-        # Rule 2: Appears continuously over a long period (e.g. >120s)
-        duration = self.last_seen[visitor_id] - self.first_seen[visitor_id]
-        if duration >= self.continuous_work_threshold:
-            self.staff_visitors.add(visitor_id)
-            print(f"[StaffEngine] Visitor {visitor_id} flagged as STAFF (Rule: Continuous store presence > {self.continuous_work_threshold}s)")
-            return True
             
-        # Rule 3: Appears in multiple camera feeds (e.g. >= 3 cameras)
-        if len(self.seen_cameras[visitor_id]) >= 3:
+        duration = self.last_seen[visitor_id] - self.first_seen[visitor_id]
+        
+        # Calculate behavioral staff score
+        # 0.4 weight for behind counter (normalized)
+        counter_score = min(1.0, self.billing_dwell[visitor_id] / self.counter_dwell_threshold) * 0.4
+        # 0.3 weight for continuous presence (normalized)
+        presence_score = min(1.0, duration / self.continuous_work_threshold) * 0.3
+        # 0.3 weight for cross-camera presence (normalized to 3 cameras)
+        camera_score = min(1.0, len(self.seen_cameras[visitor_id]) / 3.0) * 0.3
+        
+        total_score = counter_score + presence_score + camera_score
+        
+        if total_score >= 0.6:  # Threshold for staff detection
             self.staff_visitors.add(visitor_id)
-            print(f"[StaffEngine] Visitor {visitor_id} flagged as STAFF (Rule: Seen in multiple cameras: {self.seen_cameras[visitor_id]})")
+            print(f"[StaffEngine] Visitor {visitor_id} flagged as STAFF (Score: {total_score:.2f})")
             return True
             
         return False

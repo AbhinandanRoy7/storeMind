@@ -18,7 +18,7 @@ class QueueEngine:
         if event_type == "ZONE_ENTER":
             self.queue_members[track_id] = timestamp
             events.append({
-                "event": "QUEUE_JOIN",
+                "event": "BILLING_QUEUE_JOIN",
                 "queue_length": self.get_queue_length(),
                 "confidence": 0.95
             })
@@ -30,15 +30,15 @@ class QueueEngine:
                 # If they stayed a very short time and did NOT purchase, they abandoned
                 if not purchased and dwell < self.abandon_threshold:
                     events.append({
-                        "event": "QUEUE_ABANDON",
-                        "wait_time": round(dwell, 2),
+                        "event": "BILLING_QUEUE_ABANDON",
+                        "wait_seconds": round(dwell, 2),
                         "queue_length": self.get_queue_length(),
                         "confidence": 0.90
                     })
                 else:
                     events.append({
-                        "event": "QUEUE_LEAVE",
-                        "wait_time": round(dwell, 2),
+                        "event": "queue_completed",
+                        "wait_seconds": round(dwell, 2),
                         "queue_length": self.get_queue_length(),
                         "confidence": 0.95
                     })

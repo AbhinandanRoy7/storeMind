@@ -35,7 +35,8 @@ class PersonDetector:
             
         try:
             # Run inference, filter for person (class 0), use tracker
-            results = self.model.track(frame, classes=[0], persist=True, verbose=False, tracker="bytetrack.yaml")
+            # Low confidence (0.1) so we don't suppress, we tag them later
+            results = self.model.track(frame, classes=[0], persist=True, verbose=False, tracker="bytetrack.yaml", conf=0.1)
             detections = []
             
             if len(results) > 0 and results[0].boxes is not None:
